@@ -8,16 +8,36 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Picker("提醒间隔", selection: $settings.intervalMinutes) {
-                Text("30 分钟").tag(30)
-                Text("45 分钟").tag(45)
-                Text("60 分钟").tag(60)
+            HStack {
+                Text("提醒间隔")
+                Spacer()
+                TextField("", value: $settings.intervalMinutes, format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                Text("分钟")
+                Stepper("", value: $settings.intervalMinutes, in: 1...480)
+                    .labelsHidden()
+            }
+            .onChange(of: settings.intervalMinutes) { v in
+                let clamped = min(max(v, 1), 480)
+                if clamped != v { settings.intervalMinutes = clamped }
             }
 
-            Picker("展示时长", selection: $settings.displaySeconds) {
-                Text("8 秒").tag(8)
-                Text("12 秒").tag(12)
-                Text("20 秒").tag(20)
+            HStack {
+                Text("展示时长")
+                Spacer()
+                TextField("", value: $settings.displaySeconds, format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                Text("秒")
+                Stepper("", value: $settings.displaySeconds, in: 1...120)
+                    .labelsHidden()
+            }
+            .onChange(of: settings.displaySeconds) { v in
+                let clamped = min(max(v, 1), 120)
+                if clamped != v { settings.displaySeconds = clamped }
             }
 
             HStack {
