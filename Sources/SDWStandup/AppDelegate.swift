@@ -23,6 +23,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self, selector: #selector(screensChanged(_:)),
             name: NSApplication.didChangeScreenParametersNotification, object: nil)
 
+        // 屏幕锁定时停止计时，解锁后重新开始完整间隔
+        let distributed = DistributedNotificationCenter.default()
+        distributed.addObserver(
+            self, selector: #selector(screenLocked(_:)),
+            name: NSNotification.Name("com.apple.screenIsLocked"), object: nil)
+        distributed.addObserver(
+            self, selector: #selector(screenUnlocked(_:)),
+            name: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil)
+
         setupMenuBar()
 
         let settings = AppSettings.shared
@@ -55,6 +64,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func screensChanged(_ note: Notification) {
         OverlayController.shared.screensDidChange()
+    }
+
+    // MARK: - 屏幕锁定 / 解锁
+
+    @objc private func screenLocked(_ note: Notification) {
+        ReminderScheduler.shared.stop()
+    }
+
+    @objc private func screenUnlocked(_ note: Notification) {
+        guard !AppSettings.shared.isPaused else { return }
+        ReminderScheduler.shared.start()
     }
 
     // MARK: - 菜单栏（NSStatusItem）
@@ -129,7 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else if let next = ReminderScheduler.shared.nextFireDate {
             countdownItem.title = "下次提醒：" + CountdownFormatter.text(to: next)
         } else {
-            countdownItem.title = " "
+            countdownItem.title = "计时已停止"
         }
     }
 
