@@ -3,11 +3,27 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var scheduler = ReminderScheduler.shared
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchError: String?
 
     var body: some View {
         Form {
+            if settings.isPaused {
+                Text("提醒已暂停")
+                    .foregroundStyle(.secondary)
+            } else if let next = scheduler.nextFireDate {
+                HStack {
+                    Text("下次提醒")
+                    Spacer()
+                    TimelineView(.periodic(from: .now, by: 1)) { _ in
+                        Text(CountdownFormatter.text(to: next))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+            }
+
             HStack {
                 Text("提醒间隔")
                 Spacer()
