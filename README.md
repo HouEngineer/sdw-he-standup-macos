@@ -7,7 +7,7 @@ SwiftUI 原生实现，内存占用小，常驻后台。
 ## 功能
 
 - ⏱ 可自定义提醒间隔（1–480 分钟，输入框 + 步进器）
-- ⏳ 菜单与设置窗口显示下次提醒倒计时
+- ⏳ 菜单栏与设置窗口显示下次提醒倒计时（菜单打开期间逐秒刷新）
 - 🖥 所有显示器同时展示边框呼吸渐变（含外接屏、全屏 App、不同缩放/旋转）
 - 🎨 渐变颜色可配置（原生取色器）
 - 🫁 呼吸动画，展示时长可自定义（1–120 秒后自动淡出）
@@ -41,15 +41,14 @@ open dist/sdw-he-standup-macos.app
 
 ```
 Sources/SDWStandup/
-  SDWStandupApp.swift          # @main + MenuBarExtra
-  AppDelegate.swift            # 装配、屏幕变化监听、防 App Nap
+  SDWStandupApp.swift          # @main 入口
+  AppDelegate.swift            # 装配、菜单栏（NSStatusItem + NSMenu）、屏幕变化监听、防 App Nap
   AppSettings.swift            # UserDefaults 唯一数据源
-  MenuBar/MenuBarView.swift    # 菜单内容
   Reminder/ReminderScheduler.swift   # 定时调度（休眠唤醒不漂移）
   Reminder/OverlayController.swift   # 多屏覆盖层窗口
   Reminder/BorderGlowView.swift      # 四边呼吸渐变（CALayer）
   Settings/…                   # 设置窗口
-  Support/…                    # 颜色转换、自启封装
+  Support/…                    # 颜色转换、倒计时格式化、自启封装
 Scripts/package.sh             # swift build + 组 bundle + ad-hoc 签名
 Scripts/make-icon.sh           # png -> icns
 ```

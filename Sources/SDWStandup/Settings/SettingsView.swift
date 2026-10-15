@@ -8,14 +8,14 @@ struct SettingsView: View {
     @State private var launchError: String?
 
     var body: some View {
-        Form {
-            if settings.isPaused {
-                Text("提醒已暂停")
-                    .foregroundStyle(.secondary)
-            } else if let next = scheduler.nextFireDate {
-                HStack {
-                    Text("下次提醒")
-                    Spacer()
+        VStack(alignment: .leading, spacing: 16) {
+            // 下次提醒倒计时
+            HStack {
+                rowLabel("下次提醒")
+                Spacer()
+                if settings.isPaused {
+                    Text("提醒已暂停").foregroundStyle(.secondary)
+                } else if let next = scheduler.nextFireDate {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
                         Text(CountdownFormatter.text(to: next))
                             .foregroundStyle(.secondary)
@@ -24,54 +24,49 @@ struct SettingsView: View {
                 }
             }
 
+            // 提醒间隔
             HStack {
-                Text("提醒间隔")
+                rowLabel("提醒间隔")
                 Spacer()
-                TextField("", value: $settings.intervalMinutes, format: .number)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 60)
-                    .multilineTextAlignment(.trailing)
-                Text("分钟")
-                Stepper("", value: $settings.intervalMinutes, in: 1...480)
-                    .labelsHidden()
+                numberField(value: $settings.intervalMinutes, unit: "分钟")
             }
             .onChange(of: settings.intervalMinutes) { v in
-                let clamped = min(max(v, 1), 480)
-                if clamped != v { settings.intervalMinutes = clamped }
+                clamp(&settings.intervalMinutes, v, 1...480)
             }
 
+            // 展示时长
             HStack {
-                Text("展示时长")
+                rowLabel("展示时长")
                 Spacer()
-                TextField("", value: $settings.displaySeconds, format: .number)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 60)
-                    .multilineTextAlignment(.trailing)
-                Text("秒")
-                Stepper("", value: $settings.displaySeconds, in: 1...120)
-                    .labelsHidden()
+                numberField(value: $settings.displaySeconds, unit: "秒")
             }
             .onChange(of: settings.displaySeconds) { v in
-                let clamped = min(max(v, 1), 120)
-                if clamped != v { settings.displaySeconds = clamped }
+                clamp(&settings.displaySeconds, v, 1...120)
             }
 
+            // 渐变颜色
             HStack {
-                Text("渐变颜色")
+                rowLabel("渐变颜色")
                 Spacer()
                 NSColorWellRepresentable(color: accentBinding)
             }
 
-            Toggle("开机自动启动", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { newValue in
-                    do {
-                        try LaunchAtLogin.setEnabled(newValue)
-                        launchError = nil
-                    } catch {
-                        launchError = error.localizedDescription
-                        launchAtLogin = LaunchAtLogin.isEnabled
+            // 开机自启
+            HStack {
+                rowLabel("开机自动启动")
+                Spacer()
+                Toggle("", isOn: $launchAtLogin)
+                    .labelsHidden()
+                    .onChange(of: launchAtLogin) { newValue in
+                        do {
+                            try LaunchAtLogin.setEnabled(newValue)
+                            launchError = nil
+                        } catch {
+                            launchError = error.localizedDescription
+                            launchAtLogin = LaunchAtLogin.isEnabled
+                        }
                     }
-                }
+            }
 
             if let launchError {
                 Text(launchError)
@@ -79,8 +74,31 @@ struct SettingsView: View {
                     .font(.caption)
             }
         }
-        .padding()
-        .frame(width: 360)
+        .padding(20)
+        .frame(width: 400)
+    }
+
+    // MARK: - 私有
+
+    /// 标签固定自然宽度，避免被截断成「提醒间…」
+    private func rowLabel(_ text: String) -> some View {
+        Text(text).fixedSize()
+    }
+
+    private func numberField(value: Binding<Int>, unit: String) -> some View {
+        HStack(spacing: 6) {
+            TextField("", value: value, format: .number)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 60)
+                .multilineTextAlignment(.trailing)
+            Text(unit).foregroundStyle(.secondary).fixedSize()
+            Stepper("", value: value).labelsHidden()
+        }
+    }
+
+    private func clamp(_ value: inout Int, _ newValue: Int, _ range: ClosedRange<Int>) {
+        let clamped = min(max(newValue, range.lowerBound), range.upperBound)
+        if clamped != newValue { value = clamped }
     }
 
     private var accentBinding: Binding<NSColor> {
