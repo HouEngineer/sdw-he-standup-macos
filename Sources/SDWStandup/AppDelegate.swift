@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var countdownItem: NSMenuItem?
     private var pauseItem: NSMenuItem?
+    private var resetItem: NSMenuItem?
     private var menuTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -79,6 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         preview.target = self
         menu.addItem(preview)
 
+        let reset = NSMenuItem(title: "重置计时", action: #selector(resetTimer(_:)), keyEquivalent: "")
+        reset.target = self
+        menu.addItem(reset)
+
         let settings = NSMenuItem(title: "设置…", action: #selector(openSettings(_:)), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
@@ -92,6 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem = item
         countdownItem = countdown
         pauseItem = pause
+        resetItem = reset
         updateCountdown()
     }
 
@@ -99,6 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         refreshPauseUI()
+        resetItem?.isEnabled = !AppSettings.shared.isPaused
         updateCountdown()
         // 菜单跟踪运行在 event tracking mode，需注册 .common 才能在打开期间触发
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
@@ -147,6 +154,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func previewReminder(_ sender: Any?) {
         OverlayController.shared.show()
+    }
+
+    @objc private func resetTimer(_ sender: Any?) {
+        guard !AppSettings.shared.isPaused else { return }
+        ReminderScheduler.shared.start()
     }
 
     @objc private func openSettings(_ sender: Any?) {
