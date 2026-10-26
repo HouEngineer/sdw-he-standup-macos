@@ -29,12 +29,18 @@ swift run
 
 # 打包为 .app（ad-hoc 签名）
 ./Scripts/package.sh
-open dist/sdw-he-standup-macos.app
+```
+
+构建完成后，把产物移动到 `/Applications`（自启依赖稳定路径），并删除 `dist/` 下的产物：
+
+```bash
+mv dist/sdw-he-standup-macos.app /Applications/
+rm -rf dist/*
 ```
 
 ## 安装与开机自启
 
-1. 将打包出的 `sdw-he-standup-macos.app` 拷贝到 `/Applications`（自启依赖稳定路径）。
+1. 构建后把产物移动到 `/Applications`（见「构建」小节，自启依赖稳定路径）。
 2. 首次打开若被 Gatekeeper 拦截，右键 → 打开，或 系统设置 → 隐私与安全性 → 仍要打开。
 3. 点菜单栏图标 → 设置… → 打开「开机自动启动」。
 4. 到 系统设置 → 通用 → 登录项 确认条目出现（首次可能需手动允许）。
