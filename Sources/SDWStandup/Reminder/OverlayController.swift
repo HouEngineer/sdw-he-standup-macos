@@ -40,12 +40,23 @@ final class OverlayController {
     }
 
     func screensDidChange() {
-        if isShowing {
-            hide()
-            show()
-        } else {
+        guard isShowing else {
             builtSignature = ""
+            return
         }
+        let sig = signature()
+        guard sig != builtSignature else { return }
+        // 屏幕布局变化：立即重建并重新显示，旧窗口直接移除（不做淡出，避免与重新淡入的动画竞态），
+        // 且不打断正在进行的 dismiss 计时。
+        let old = windows
+        windows = NSScreen.screens.map { makeWindow(for: $0) }
+        builtSignature = sig
+        for w in windows {
+            w.orderFrontRegardless()
+            (w.contentView as? BorderGlowView)?
+                .fadeInThenBreathe(breathCycle: settings.breathCycleSeconds)
+        }
+        for w in old { w.orderOut(nil) }
     }
 
     // MARK: - 私有
@@ -54,7 +65,12 @@ final class OverlayController {
         dismissTask?.cancel()
         let seconds = Double(settings.displaySeconds)
         dismissTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(seconds))
+            do {
+                try await Task.sleep(for: .seconds(seconds))
+            } catch {
+                // 任务被取消（新的 show 或 hide 到来）时，不再隐藏刚显示的覆盖层
+                return
+            }
             self?.hide()
         }
     }
