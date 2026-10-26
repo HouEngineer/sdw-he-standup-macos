@@ -35,7 +35,7 @@ swift run
 
 ```bash
 mv dist/sdw-he-standup-macos.app /Applications/
-rm -rf dist/*
+rm -rf dist
 ```
 
 ## 安装与开机自启
